@@ -1,0 +1,39 @@
+@startuml
+skinparam shadowing false
+
+title Сценарий: Попытка доступа к ресурсу через QR/NFC
+
+actor Пользователь as User
+participant "Считыватель QR/NFC" as Reader
+participant "Сервис Контроля Доступа" as AccessControl
+participant "Сервис Бронирования" as BookingService
+participant "Сервис Уведомлений" as NotificationService
+participant "Сервис Журналирования" as LoggingService
+
+User -> Reader: 1. Сканировать QR-код / Приложить NFC-метку (ФТ-003.02)
+Reader -> AccessControl: 2. Отправить ID пользователя и ID точки доступа
+activate AccessControl
+
+AccessControl -> BookingService: 3. Проверить активное бронирование для пользователя/точки (ФТ-003.03)
+activate BookingService
+BookingService --> AccessControl: 4. Результат проверки (есть/нет активного бронирования)
+deactivate BookingService
+
+alt Есть активное бронирование
+    AccessControl -> Reader: 5. Отправить команду на разблокировку (доступа предоставлен)
+    Reader --> User: 6. Индикация "Доступ разрешен" (напр. зеленый свет, звук)
+    AccessControl -> LoggingService: 7. Зарегистрировать успешную попытку доступа (ФТ-003.04)
+    activate LoggingService
+    LoggingService --> AccessControl: 8. Запись добавлена
+    deactivate LoggingService
+else Нет активного бронирования
+    AccessControl -> Reader: 5a. Отправить команду на блокировку (доступа нет)
+    Reader --> User: 6a. Индикация "Доступ запрещен" (напр. красный свет, звук)
+    AccessControl -> LoggingService: 7a. Зарегистрировать неуспешную попытку доступа (ФТ-003.04)
+    activate LoggingService
+    LoggingService --> AccessControl: 8a. Запись добавлена
+    deactivate LoggingService
+    AccessControl -> NotificationService: 9a. (Опционально) Уведомить администратора о несанкционированной попытке (ФТ-015.01)
+end alt
+deactivate AccessControl
+@enduml

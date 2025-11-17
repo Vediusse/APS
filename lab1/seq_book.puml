@@ -1,0 +1,49 @@
+@startuml
+
+skinparam shadowing false
+
+title Сценарий: Бронирование ресурса и оплата
+
+actor Пользователь as User
+participant "Мобильное/Веб Приложение" as App
+participant "Сервис Бронирования" as BookingService
+participant "Сервис Ресурсов" as ResourceService
+participant "Платежная Система" as PaymentGateway
+participant "Сервис Уведомлений" as NotificationService
+
+User -> App: 1. Открыть интерфейс бронирования
+App -> BookingService: 2. Запросить доступные ресурсы (ФТ-001.01.01)
+BookingService -> ResourceService: 3. Получить статус ресурсов
+ResourceService --> BookingService: 4. Вернуть данные о доступности (ФТ-001.01.01)
+BookingService --> App: 5. Отобразить доступные ресурсы (с индикацией, ФТ-001.01.02)
+activate App
+User -> App: 6. Выбрать ресурс, дату и время (ФТ-001.02.01, ФТ-001.02.02)
+App -> BookingService: 7. Запросить бронирование (ФТ-001.02)
+activate BookingService
+BookingService -> ResourceService: 8. Проверить доступность и создать временное бронирование
+ResourceService --> BookingService: 9. Статус доступности
+BookingService -> PaymentGateway: 10. Инициировать платеж (ФТ-010.02)
+activate PaymentGateway
+PaymentGateway --> BookingService: 11. Запрос на подтверждение оплаты
+BookingService --> App: 12. Перенаправление на страницу оплаты/Окно оплаты
+
+App -> User: 13. Запрос данных для оплаты
+User -> App: 14. Ввести данные оплаты
+App -> PaymentGateway: 15. Отправить данные оплаты
+PaymentGateway --> BookingService: 16. Результат оплаты (успешно/неуспешно) (ФТ-010.02)
+deactivate PaymentGateway
+
+alt Успешная оплата
+    BookingService -> BookingService: 17. Зафиксировать бронирование в БД (ФТ-001.02.03, ФТ-010.03)
+    BookingService -> NotificationService: 18. Отправить уведомление о подтверждении (ФТ-005.01.03)
+    NotificationService --> BookingService: 19. Уведомление отправлено
+    BookingService --> App: 20. Подтверждение бронирования
+    App --> User: 21. Отобразить подтверждение бронирования
+else Неуспешная оплата
+    BookingService -> BookingService: 17a. Отменить временное бронирование
+    BookingService --> App: 18a. Сообщение об ошибке оплаты
+    App --> User: 19a. Отобразить ошибку оплаты
+end alt
+deactivate App
+deactivate BookingService
+@enduml
