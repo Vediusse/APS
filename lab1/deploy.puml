@@ -1,0 +1,140 @@
+@startuml
+!theme plain
+skinparam componentStyle uml2
+skinparam node {
+  BackgroundColor LightGray
+  BorderColor Black
+  FontColor Black
+  StereotypeFontColor Black
+}
+
+' Настройки для лучшей читаемости
+left to right direction
+skinparam ranksep 50
+skinparam nodesep 50
+skinparam arrowMessageDirection horizontal
+
+' =========================================================
+' Узлы и их артефакты (Компоненты)
+' =========================================================
+
+node "Центр обработки данных (Облако)" as DataCenter {
+  artifact "Нагрузочный балансировщик" as LoadBalancer
+  node "Сервер приложений A (Web/API)" as AppServerA {
+    component "API Gateway" as APIGateway_comp
+    component "Booking Service" as BookingService_comp
+    component "User & Auth Service" as UserService_comp
+    component "Resource Service" as ResourceService_comp
+    component "Notification Service" as NotificationService_comp
+    component "Tariff & Payment Service" as PaymentService_comp
+    component "Access Control Service Backend" as AccessControlBackend_comp
+    component "Admin & Reporting Service" as AdminReportingService_comp
+    component "Cloud Storage Service" as CloudStorageService_comp
+  }
+  node "Сервер приложений B (Web/API)" as AppServerB {
+    component "API Gateway" as APIGateway_comp2
+    component "Booking Service" as BookingService_comp2
+    component "User & Auth Service" as UserService_comp2
+    component "Resource Service" as ResourceService_comp2
+    component "Notification Service" as NotificationService_comp2
+    component "Tariff & Payment Service" as PaymentService_comp2
+    component "Access Control Service Backend" as AccessControlBackend_comp2
+    component "Admin & Reporting Service" as AdminReportingService_comp2
+    component "Cloud Storage Service" as CloudStorageService_comp2
+  }
+  node "Сервер логирования" as LogServer {
+    component "Logging Service" as LoggingService_comp
+  }
+  node "Сервер БД (Мастер)" as DbMaster {
+    database "Главная База Данных" as Database_artifact
+  }
+  node "Сервер БД (Реплика)" as DbReplica {
+    database "Главная База Данных (Реплика)" as DatabaseReplica_artifact
+  }
+}
+
+node "Коворкинг Хаб" as CoworkingHub {
+  node "Сеть Коворкинга (Локальная)" as CoworkingNetwork {
+    component "Локальный Шлюз Управления" as LocalGateway_comp {
+      component "IoT Controller" as IoTCtrl_comp
+      component "Local Caching Service" as LocalCache_comp
+    }
+    node "Рабочее Место (ПК/Консоль) [xN]" as WorkstationNode {
+      component "Client Agent (Win/Ubuntu)" as ClientAgent_comp
+      component "User Profile Application" as UserProfileApp_comp
+    }
+    node "Электронный Замок [xM]" as LockNode {
+      component "Lock Controller" as LockCtrl_comp
+    }
+    node "Датчик / Контроллер [xK]" as SensorNode {
+      component "Sensor Agent" as SensorAgent_comp
+    }
+  }
+}
+
+node "Устройство Пользователя" as UserDevice {
+  component "Мобильное приложение" as MobileApp_artifact
+  component "Веб-браузер" as WebBrowser_artifact
+}
+
+node "Внешняя Платёжная Система" as ExternalPaymentSystem_Node {
+  artifact "Payment Processing API" as PaymentAPI_artifact
+}
+
+node "Внешняя Система Календарей" as ExternalCalendarSystem_Node {
+  artifact "Calendar API" as CalendarAPI_artifact
+}
+
+
+' =========================================================
+' -- СОЕДИНЕНИЯ МЕЖДУ УЗЛАМИ И КОМПОНЕНТАМИ --
+' =========================================================
+
+' Пользовательские устройства к Центру обработки данных
+UserDevice --> LoadBalancer : HTTPS/TCP
+
+' LoadBalancer распределяет запросы на серверы приложений
+LoadBalancer --> AppServerA : HTTPS/TCP
+LoadBalancer --> AppServerB : HTTPS/TCP
+
+' Взаимодействия внутри ЦОД
+AppServerA <--> DbMaster : JDBC/ODBC
+AppServerB <--> DbMaster : JDBC/ODBC
+AppServerA --> LogServer : Syslog/HTTP
+AppServerB --> LogServer : Syslog/HTTP
+DbMaster <--> DbReplica : Репликация
+
+' Core Services (представлены как компоненты) взаимодействуют друг с другом через локальные вызовы/брокер сообщений
+' (чтобы не загромождать, не рисуем все внутренние связи между service_comp, они были на компонентной диаграмме)
+
+' Связь ЦОД с Коворкинг Хабом
+DataCenter <--> CoworkingHub : Защищенное VPN/HTTPS
+
+' Связь внутри Коворкинг Хаба
+CoworkingNetwork --> LocalGateway_comp : LAN
+LocalGateway_comp --> WorkstationNode : LAN
+LocalGateway_comp --> LockNode : Wireless/LAN
+LocalGateway_comp --> SensorNode : Wireless/LAN
+
+' WorkstationNode взаимодействие с центром
+WorkstationNode --> ResourceService_comp : (через LocalGateway, API/MQTT)
+WorkstationNode --> CloudStorageService_comp : (через LocalGateway, API)
+
+' LockNode взаимодействие с центром
+LockNode --> AccessControlBackend_comp : (через LocalGateway, API/MQTT)
+
+' SensorNode взаимодействие с центром
+SensorNode --> ResourceService_comp : (через LocalGateway, API/MQTT)
+
+' Внешние интеграции
+PaymentService_comp --> ExternalPaymentSystem_Node : HTTPS API
+BookingService_comp --> ExternalCalendarSystem_Node : HTTPS API
+
+' MobileApp также может напрямую взаимодействовать с Calendar API
+MobileApp_artifact --> ExternalCalendarSystem_Node : HTTPS API
+
+
+' Дополнительные связи
+LogServer --> Database_artifact : (Хранение агрегированных логов)
+
+@enduml
