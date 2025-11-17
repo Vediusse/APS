@@ -1,0 +1,93 @@
+@startuml UseCaseDiagram_Refactored
+
+left to right direction
+
+' Акторы
+actor "Пользователь" as User
+actor "Администратор" as Admin
+actor "Внешняя\nПлатежная Система" as PaymentSystem
+
+
+
+
+rectangle "Система Управления Коворкингом" {
+
+    ' Группа - Пользовательский функционал
+    folder "Пользовательские операции" {
+        usecase "Отображение доступности ресурсов" as UC1
+        usecase "Бронирование ресурсов" as UC2
+        usecase "Отмена бронирования" as UC3
+        usecase "Изменение бронирования" as UC4
+        usecase "Получение уведомлений" as UC5
+        usecase "Авторизация и доступ к ресурсам" as UC6
+        usecase "Оставление отзывов и оценок" as UC7
+        usecase "Загрузка/Удаление файлов" as UC8
+        usecase "Просмотр персонализированных предложений" as UC9
+    }
+
+    ' Группа - Административные операции
+    folder "Управление Системой" {
+        usecase "Управление ресурсами (CRUD)" as UC10
+        usecase "Управление пользователями (CRUD)" as UC14
+        usecase "Управление тарифами и ценами" as UC22
+        usecase "Массовая рассылка уведомлений" as UC19
+        usecase "Модерация отзывов" as UC20
+    }
+
+    folder "Отчетность и мониторинг" {
+        usecase "Просмотр детальной истории ресурсов" as UC21
+        usecase "Просмотр отчетов по загруженности" as UC23
+        usecase "Просмотр журнала действий/событий" as UC26
+        usecase "Мониторинг тех. состояния оборудования" as UC28
+    }
+
+    folder "Конфигурация и безопасность" {
+        usecase "Настройка ПО и лицензий" as UC18
+        usecase "Настройка правил оптимизации" as UC24
+        usecase "Настройка штрафов за задержки" as UC25
+        usecase "Управление блокировками аккаунтов" as UC27
+    }
+
+    ' Внутренние/интеграционные UC
+    usecase "Обработка платежей" as UC29
+    usecase "Возврат средств" as UC30
+
+}
+
+
+' Связи Пользователь - Система
+User -- UC1
+User -- UC2
+User -- UC3
+User -- UC4
+User -- UC5
+User -- UC6
+User -- UC7
+User -- UC8
+User -- UC9
+
+' Связи Администратор - Система
+Admin -- UC10
+Admin -- UC14
+Admin -- UC22
+Admin -- UC19
+Admin -- UC20
+Admin -- UC21
+Admin -- UC23
+Admin -- UC26
+Admin -- UC28
+Admin -- UC18
+Admin -- UC24
+Admin -- UC25
+Admin -- UC27
+
+' Связи с Платежной системой
+UC2 .> UC29 : <<includes>>
+UC3 .> UC30 : <<includes>>
+PaymentSystem -- UC29
+PaymentSystem -- UC30
+
+
+
+
+@enduml
