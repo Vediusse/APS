@@ -1,0 +1,118 @@
+@startuml
+!theme plain
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+
+' Настройка размера и ориентации
+left to right direction
+skinparam ranksep 30 ' Увеличиваем расстояние между рангами
+skinparam nodesep 40 ' Увеличиваем расстояние между узлами
+skinparam arrowMessageDirection horizontal ' Стрелки с сообщениями горизонтально по умолчанию
+
+' =========================================================
+' 1. Клиентские приложения
+' =========================================================
+package "Клиентские Интерфейсы" {
+  component "Веб-приложение" as WebApp
+  component "Мобильное приложение" as MobileApp
+}
+
+' =========================================================
+' 2. Backend (Основные Сервисы)
+' =========================================================
+package "Core Backend Services" {
+
+  component "API Gateway" as APIGateway
+
+  component "Booking Service" as BookingService
+  component "User & Auth Service" as UserService
+  component "Resource Service" as ResourceService
+  component "Notification Service" as NotificationService
+  component "Tariff & Payment Service" as PaymentService
+  component "Access Control Service" as AccessControlService
+  component "Admin & Reporting Service" as AdminReportingService
+  component "Cloud Storage Service" as CloudStorageService
+}
+
+' =========================================================
+' 3. Инфраструктурные сервисы
+' =========================================================
+package "Инфраструктура" {
+  database "Главная База Данных" as Database
+  component "Logging Service" as LoggingService
+}
+
+' =========================================================
+' 4. Внешние системы и Оборудование
+' =========================================================
+package "Внешние Интеграции" {
+  component "Внешняя Платежная Система" as ExternalPayment
+  component "Внешняя Календарная Система" as ExternalCalendar
+  cloud "Оборудование Коворкинга" as Hardware {
+    [ПК / Консоли] as Pcs
+    [Электронные Замки] as Locks
+    [Датчики / Контроллеры] as Sensors
+  }
+}
+
+
+' =========================================================
+' -- ВЗАИМОДЕЙСТВИЯ (ОСНОВНЫЕ ПОТОКИ) --
+' =========================================================
+
+' Клиентские приложения к API Gateway
+WebApp --> APIGateway : Запросы UI/API
+MobileApp --> APIGateway : Запросы UI/API
+
+' API Gateway к Core Services (как точка входа)
+APIGateway --> BookingService : Бронирование
+APIGateway --> UserService : Профиль, Аутентификация
+APIGateway --> ResourceService : Просмотр доступности
+APIGateway --> CloudStorageService : Доступ к файлам
+APIGateway --> AdminReportingService : Отчеты, Админ. UI
+
+' Взаимодействия между Core Services
+BookingService --> UserService : Проверка пользователя
+BookingService --> ResourceService : Проверка / Блокировка ресурса
+BookingService --> PaymentService : Обработка платежей
+BookingService --> NotificationService : Уведомления о бронировании
+BookingService --> AccessControlService : Активация доступа
+
+AccessControlService --> UserService : Авторизация
+AccessControlService --> Hardware : Открытие/Закрытие, Активация
+
+ResourceService --> Hardware : Мониторинг, Управление, Профили
+ResourceService --> NotificationService : Уведомления о статусе
+
+UserService --> NotificationService : Настройки уведомлений
+UserService --> PaymentService : Штрафы (инициирует)
+
+PaymentService --> ExternalPayment : Процессинг
+PaymentService --> NotificationService : Уведомления об оплате
+
+AdminReportingService --> BookingService : Данные
+AdminReportingService --> UserService : Данные
+AdminReportingService --> ResourceService : Данные / Управление
+AdminReportingService --> PaymentService : Данные
+AdminReportingService --> AccessControlService : Ручное управление
+AdminReportingService --> LoggingService : Доступ к логам
+
+' Notification Service к Клиентским приложениям (Push)
+NotificationService .right.> WebApp : Push-уведомления
+NotificationService .right.> MobileApp : Push-уведомления
+
+' Интеграции с внешними системами
+BookingService --> ExternalCalendar : Экспорт .ics (серверный)
+MobileApp --> ExternalCalendar : Экспорт .ics (клиентский)
+
+' Общие взаимодействия с Базой Данных и Логированием (для всех Core Services)
+' Используем одну абстрактную связь от всего пакета 'Core Backend Services'
+' Это существенно уменьшает количество стрелок.
+' Каждый сервис в 'Core Backend Services' подразумевается, что читает/пишет в БД и логирует события.
+Database <.up. "Core Backend Services" : Хранение данных
+LoggingService <.up. "Core Backend Services" : Запись событий
+
+' Logging Service пишет в Базу Данных (для хранения логов)
+LoggingService --> Database : Хранение логов
+
+@enduml
