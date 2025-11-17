@@ -1,0 +1,405 @@
+@startuml
+!theme plain
+
+' Объявление классов
+class User {
+  + String userId
+  + String fullName
+  + String email
+  + String phoneNumber
+  + UserStatus status
+  + String qrCode
+  + String nfcTag
+  + List<Booking> bookingsHistory
+  + List<FinancialTransaction> financialHistory
+  + List<NotificationPreference> notificationPreferences
+  + List<Feedback> feedbacks
+  + int unauthorizedAccessAttempts
+  + void register()
+  + void login()
+  + void viewAvailableResources()
+  + void createBooking(resourceId, startTime, endTime)
+  + void cancelBooking(bookingId)
+  + void modifyBooking(bookingId, newParams)
+  + void makePayment(bookingId)
+  + void leaveFeedback(resourceId, rating, comment)
+  + void uploadFiles(file)
+  + void exportBookingsToCalendar()
+}
+
+class Administrator {
+  + String adminId
+  + String username
+  + String passwordHash
+  + AdminRole role
+  + void createResource(resourceDetails)
+  + void editResource(resourceId, newDetails)
+  + void deleteResource(resourceId)
+  + void assignResourceToEquipment(resourceId, equipmentId)
+  + void manageUserAccount(userId, action)
+  + void viewUserBookingHistory(userId)
+  + void viewUserFinancialHistory(userId)
+  + void resetUserPassword(userId)
+  + void generateUserQRCode(userId)
+  + void manageTariffs(tariffDetails)
+  + void sendMassNotification(message, channels)
+  + void moderateFeedback(feedbackId, action)
+  + void manageSoftwareLicenses(licenseDetails)
+  + void generateResourceUsageReports(period)
+  + void configureOptimizationRules(rules)
+  + void manageAdminRolesAndPermissions(roleId, permissions)
+  + void manuallyControlDoor(doorId, state)
+  + void manuallyControlResource(resourceId, state)
+  + void viewLogs()
+}
+
+class Resource {
+  + String resourceId
+  + String name
+  + String description
+  + ResourceType type
+  + ResourceStatus status
+  + String location
+  + String associatedEquipmentId
+  + Set<SoftwareProfile> supportedSoftwareProfiles
+  + double currentHourlyRate
+  + List<UsageHistoryEntry> usageHistory
+  + List<Feedback> feedbacks
+  + List<TechnicalMetric> latestMetrics
+  + void activate()
+  + void deactivate()
+  + void markAsUnavailable(reason)
+  + void updateStatus(newStatus)
+}
+
+enum ResourceType {
+  WORKPLACE
+  GAME_ZONE
+  VR_ZONE
+  MEETING_ROOM
+  GRAPHIC_STATION
+  CONSOLE
+  OTHER
+}
+
+enum ResourceStatus {
+  AVAILABLE
+  BOOKED
+  IN_USE
+  UNAVAILABLE_MAINTENANCE
+  UNAVAILABLE_FAULT
+}
+
+class Booking {
+  + String bookingId
+  + String userId
+  + String resourceId
+  + DateTime startTime
+  + DateTime endTime
+  + DateTime actualActivationTime
+  + DateTime actualDeactivationTime
+  + BookingStatus status
+  + double totalPrice
+  + String paymentTransactionId
+  + List<Fine> incurredFines
+  + void confirm()
+  + void cancel()
+  + void modify(newStartTime, newEndTime, newResource)
+  + void activate()
+  + void deactivate()
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  AUTO_CANCELLED_NO_ACTIVATION
+  PENALIZED_OVERDUE
+}
+
+class SoftwareProfile {
+  + String profileId
+  + String name
+  + String description
+  + Map<String, String> softwareList
+  + Map<String, String> environmentSettings
+  + void applyProfile(resourceId)
+  + void revertToStandardProfile(resourceId)
+}
+
+class PaymentSystem {
+  + String systemName
+  + String apiEndpoint
+  + boolean processPayment(amount, currency, cardDetails)
+  + boolean refundPayment(transactionId, amount)
+  + PaymentStatus getTransactionStatus(transactionId)
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  REFUNDED
+}
+
+class FinancialTransaction {
+  + String transactionId
+  + String bookingId
+  + String userId
+  + double amount
+  + String currency
+  + DateTime transactionDate
+  + TransactionType type
+  + PaymentStatus status
+  + String externalSystemReference
+}
+
+enum TransactionType {
+  PAYMENT
+  REFUND
+  FINE
+}
+
+class Notification {
+  + String notificationId
+  + String userId
+  + NotificationType type
+  + String message
+  + DateTime timestamp
+  + List<NotificationChannel> channelsUsed
+  + boolean isRead
+  + void send()
+}
+
+enum NotificationType {
+  BOOKING_START_REMINDER
+  BOOKING_END_REMINDER
+  BOOKING_CONFIRMATION
+  BOOKING_CANCELLATION
+  BOOKING_MODIFICATION
+  MASS_MESSAGE
+  ACCOUNT_BLOCKED
+  FINE_ISSUED
+  EQUIPMENT_FAULT
+  MAINTENANCE_SCHEDULED
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH_NOTIFICATION
+  SMS
+  TELEGRAM
+}
+
+class Feedback {
+  + String feedbackId
+  + String userId
+  + String resourceId
+  + int rating (1-5)
+  + String comment
+  + DateTime submissionDate
+  + FeedbackStatus status
+  + String moderatorComment
+}
+
+enum FeedbackStatus {
+  PENDING_MODERATION
+  APPROVED
+  REJECTED
+  DELETED
+}
+
+class LogEntry {
+  + String logId
+  + DateTime timestamp
+  + String userId (optional)
+  + String resourceId (optional)
+  + LogEventType eventType
+  + String description
+  + String ipAddress (optional)
+  + String adminId (optional)
+}
+
+enum LogEventType {
+  USER_ACTION
+  SYSTEM_ERROR
+  SYSTEM_EVENT
+  RESOURCE_STATUS_CHANGE
+  ACCESS_ATTEMPT
+  ADMIN_ACTION
+}
+
+class Tariff {
+  + String tariffId
+  + ResourceType resourceType
+  + String tariffName
+  + double baseRatePerHour
+  + Map<TimePeriod, double> differentialRates
+  + Map<DayType, double> dayTypeModifiers
+  + double fineRatePerHourOverdue
+}
+
+enum TimePeriod {
+  DAY_TIME (09:00-18:00)
+  EVENING_TIME (18:00-00:00)
+  NIGHT_TIME (00:00-09:00)
+}
+
+enum DayType {
+  WEEKDAY
+  WEEKEND
+}
+
+class UsageHistoryEntry {
+  + String historyId
+  + String resourceId
+  + String userId
+  + DateTime actualStartTime
+  + DateTime actualEndTime
+  + Duration duration
+}
+
+class Fine {
+  + String fineId
+  + String userId
+  + String bookingId
+  + double amount
+  + DateTime issuedDate
+  + FineType type
+  + FineStatus status
+}
+
+enum FineType {
+  OVERDUE_DEACTIVATION
+  UNAUTHORIZED_ACCESS
+  MISUSE_RESOURCE
+}
+
+enum FineStatus {
+  ISSUED
+  PAID
+  WAIVED
+}
+
+class AdminRole {
+  + String roleId
+  + String roleName
+  + Set<String> permissions
+}
+
+class CloudStorage {
+  + String storageId
+  + String userId
+  + long allocatedSizeGB
+  + long usedSizeGB
+  + Map<String, FileMetadata> files
+  + void uploadFile(file)
+  + void downloadFile(fileId)
+  + void deleteFile(fileId)
+}
+
+class FileMetadata {
+  + String fileId
+  + String fileName
+  + long fileSize
+  + DateTime uploadDate
+  + String path
+}
+
+class TechnicalMetric {
+  + String metricId
+  + String resourceId
+  + DateTime timestamp
+  + MetricType type
+  + double value
+  + String unit
+}
+
+enum MetricType {
+  CPU_TEMPERATURE
+  GPU_TEMPERATURE
+  RAM_USAGE_PERCENT
+  NETWORK_STATUS_PING_MS
+  DISK_USAGE_PERCENT
+}
+
+class OptimizationRule {
+  + String ruleId
+  + String name
+  + String description
+  + RuleTrigger trigger
+  + RuleAction action
+  + Map<String, String> parameters
+}
+
+enum RuleTrigger {
+  LOW_RESOURCE_UTILIZATION
+  HIGH_RESOURCE_DEMAND
+  RESOURCE_AVAILABLE_SHORTLY
+}
+
+enum RuleAction {
+  APPLY_DISCOUNT
+  SUGGEST_ALTERNATIVE_RESOURCE
+  SEND_PROMOTIONAL_OFFER
+}
+
+' Отношения между классами
+
+User "1" -- "0..*" Booking : создаёт >
+User "1" -- "0..*" FinancialTransaction : совершает >
+User "1" -- "0..*" Notification : получает >
+User "1" -- "0..*" Feedback : оставляет >
+User "1" -- "1" CloudStorage : владеет >
+Administrator "1" -- "0..*" Resource : управляет >
+Administrator "1" -- "0..*" User : управляет >
+Administrator "1" -- "0..*" Booking : управляет >
+Administrator "1" -- "0..*" SoftwareProfile : управляет >
+Administrator "1" -- "0..*" Tariff : управляет >
+Administrator "1" -- "0..*" Notification : отправляет >
+Administrator "1" -- "0..*" AdminRole : управляет >
+Administrator "1" -- "0..*" OptimizationRule : настраивает >
+Administrator "1" -- "0..*" Fine : назначает >
+
+Booking "1" -- "1" User : относится к >
+Booking "1" -- "1" Resource : забронирован для >
+Booking "1" -- "0..1" PaymentSystem : требует оплаты >
+Booking "1" -- "0..*" FinancialTransaction : включает >
+Booking "1" -- "0..*" Fine : налагает >
+
+Resource "1" -- "0..*" SoftwareProfile : поддерживает >
+Resource "1" -- "0..*" Booking : может быть забронирован >
+Resource "1" -- "0..*" UsageHistoryEntry : имеет >
+Resource "1" -- "0..*" Feedback : имеет >
+Resource "1" -- "0..*" TechnicalMetric : собирает метрики >
+
+PaymentSystem "1" -- "0..*" FinancialTransaction : обрабатывает >
+
+Notification "1" -- "1" User : адресовано >
+
+Feedback "1" -- "1" User : от >
+Feedback "1" -- "1" Resource : о >
+
+LogEntry "1" -- "0..1" User : связано с >
+LogEntry "1" -- "0..1" Resource : связано с >
+LogEntry "1" -- "0..1" Administrator : связано с >
+
+Tariff "1" -- "0..*" Resource : применяется к >
+
+UsageHistoryEntry "1" -- "1" Resource : относится к >
+UsageHistoryEntry "1" -- "1" User : относится к >
+
+Fine "1" -- "1" User : адресован >
+Fine "1" -- "1" Booking : связан с >
+
+AdminRole "1" -- "0..*" Administrator : назначается >
+
+CloudStorage "1" -- "0..*" FileMetadata : содержит >
+
+TechnicalMetric "1" -- "1" Resource : относится к >
+
+OptimizationRule "1" -- "0..*" Resource : влияет на >
+
+@enduml
